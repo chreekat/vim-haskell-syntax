@@ -1,0 +1,24 @@
+name:                vim-haskell-syntax-tester
+version:             0.1.0.0
+synopsis:            Build a test suite for vim-haskell-syntax
+-- description:
+license:             MIT
+license-file:        LICENSE
+author:              Bryan Richter
+maintainer:          b@chreekat.net
+-- copyright:
+category:            Testing
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+executable vim-haskell-syntax-tester
+  main-is:             test/Main.hs
+  -- other-modules:
+  -- other-extensions:
+  build-depends:       base >=4.7 && <4.8,
+                       tasty,
+                       tasty-golden
+
+  -- hs-source-dirs:
+  default-language:    Haskell2010
