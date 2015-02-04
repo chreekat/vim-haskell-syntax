@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 executable vim-haskell-syntax-tester
   hs-source-dirs:      test/runner
   main-is:             Main.hs
-  other-modules:       Test.Tasty.Golden.FilePath
+  other-modules:       Test.Tasty.Golden.FilePath, Html, Types
   -- other-extensions:
   build-depends:       base >=4.7 && <4.8,
                        directory,

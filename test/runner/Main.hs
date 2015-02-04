@@ -1,12 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
-{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 import Prelude hiding (FilePath, readFile)
 
+import Types
+import Html (goldenVsHtml)
+
 import Test.Tasty
-import Test.Tasty.Golden.FilePath as Gold
 import Test.Tasty.Golden.Manage as Gold (defaultMain)
+import Test.Tasty.Golden.FilePath
+import Filesystem.Path.CurrentOS
+import Filesystem
 import System.Directory as Dir (getTemporaryDirectory)
 
 import Control.Applicative
@@ -14,39 +18,9 @@ import Control.Exception (catch)
 import Control.Monad ((<=<))
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as BS
-import Data.ByteString.Lazy (ByteString)
-import Data.ByteString.Lazy.Char8 as BSC (pack, concatMap)
-import Filesystem
-import Filesystem.Path.CurrentOS hiding (concat)
-import Shelly hiding ((</>), (<.>))
-import qualified Shelly as S
-import Text.XML.HXT.Core
-import qualified Data.Text as T
 import Data.Text (Text)
 
 main = join $ Gold.defaultMain <$> execUsualGoldTests
-
-newtype HtmlPath = HtmlPath FilePath
-    deriving (Show)
-newtype InputPath = InputPath FilePath
-    deriving (Show)
-newtype TmpPath = TmpPath FilePath
-    deriving (Show)
-newtype GoldPath = GoldPath FilePath
-    deriving (Show)
-
-newtype HtmlString = HtmlString { fromHtml :: ByteString }
-
--- | Compare vim-generated html to a golden file.
---
--- Needs a TmpPath for its inner machinery, which comes from IO
-goldenVsHtml :: TestName
-             -> IO TmpPath
-             -> InputPath
-             -> GoldPath
-             -> TestTree
-goldenVsHtml name mPath inp (GoldPath gold) =
-    goldenVsStringDiff name (\ref new -> ["diff", "-u", ref, new]) gold (fromHtml <$> htmlString mPath inp)
 
 -- | "The usual"
 --
@@ -58,39 +32,6 @@ usualGoldTest tmp input@(InputPath inp) =
 
     where
     testName = encodeString (filename inp)
-
--- | Generate the html with vim.
-htmlString :: IO TmpPath -> InputPath -> IO HtmlString
-htmlString mPath (InputPath input) = do
-    (TmpPath tmp) <- mPath
-    let base = filename input
-    rawText <- shelly $ do
-        cp input tmp
-        toHtml (tmp </> base)
-        readfile (tmp </> base <.> "html")
-    let finalBytes = stripTitle rawText
-    return $ HtmlString finalBytes
-
-    where
-    stripTitle :: Text -> ByteString
-    stripTitle bs =
-        let
-            stripArrow = arr T.unpack >>> hread >>> processTopDown (ifA (hasName "title") none this)
-        in BSC.pack $ concat $ (runLA . xshow) stripArrow bs
-
-
--- | Call vim's toHtml on a file
-toHtml :: FilePath -> Sh ()
-toHtml path = do
-    thisDir <- pwd
-    let
-        path' = toTextIgnore $ filename path
-        syntaxFile = toTextIgnore $ thisDir </> "syntax" </> "haskell.vim"
-        toHtmlFile = toTextIgnore $ thisDir </> "test" </> "runner" </> "to-html.vim"
-    cd $ directory path
-    run_ "vim"
-        ["-E", "-S", syntaxFile, "-u", toHtmlFile, "--cmd",
-         "view " `T.append` path']
 
 
 -- | Gather all usual-golden test files.
