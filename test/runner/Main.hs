@@ -26,7 +26,11 @@ goldenInputs :: IO [FilePath]
 goldenInputs = findByExtension [".hs"] "test/golden"
 
 goldenTest :: FilePath -> TestTree
-goldenTest inp = goldenVsFile inp (inp <.> ".gold.html") (inp <.> ".html") (genHtml inp)
+goldenTest inp = goldenVsFile
+    (dropExtension . takeFileName $ inp)
+    (inp <.> ".gold.html")
+    (inp <.> ".html")
+    (genHtml inp)
 
 goldenTests :: IO TestTree
 goldenTests = (testGroup "Usual Gold") <$> (map goldenTest) <$> goldenInputs
