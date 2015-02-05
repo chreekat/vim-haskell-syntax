@@ -50,10 +50,15 @@ genHtml tmp input = do
     let target = tmp </> (takeFileName input)
     copyFile input target
     void $ readProcess "vim"
-        [ "-E"
-        , "-S", "syntax/haskell.vim"
-        , "-u", "test/runner/to-html.vim"
-        , "--cmd", "view " ++ target
+        [ "-Eu", "syntax/haskell.vim"
+        , "-S", "test/runner/test-highlight.vim"
+        , "--cmd", "set nocp"
+        , "+let g:html_no_progress=1"
+        , "+set ft=haskell"
+        , "+runtime plugin/tohtml.vim"
+        , "+TOhtml"
+        , "+wqa"
+        , target
         ]
         ""
     void $ runX $ stripTitle (target <.> ".html") (input <.> ".html")
