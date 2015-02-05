@@ -26,8 +26,9 @@ goldenInputs :: IO [FilePath]
 goldenInputs = findByExtension [".hs"] "test/golden"
 
 goldenTest :: FilePath -> TestTree
-goldenTest inp = goldenVsFile
+goldenTest inp = goldenVsFileDiff
     (dropExtension . takeFileName $ inp)
+    (\a b -> ["diff", "-u", a, b])
     (inp <.> ".gold.html")
     (inp <.> ".html")
     (do
@@ -75,7 +76,7 @@ readX :: FilePath -> IOSArrow XmlTree XmlTree
 readX = readDocument [withParseHTML True]
 
 writeX :: FilePath -> IOSArrow XmlTree XmlTree
-writeX out = writeDocument [withOutputHTML, withIndent True] out
+writeX out = writeDocument [withOutputHTML] out
 
 openTempDirectory :: Maybe FilePath -- ^ optional location
                   -> String -- ^ template
