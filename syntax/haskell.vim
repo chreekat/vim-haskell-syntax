@@ -13,4 +13,7 @@ syntax case match
 syn keyword hsModuleKeyword module nextgroup=hsModule skipwhite skipnl
 syn match   hsModule /\u\w*/ display contained
 
+" Top-level binding
+syn match   hsTopLevel /^\U\w*\ze\s*=/
+
 let b:current_syntax = "haskell"
