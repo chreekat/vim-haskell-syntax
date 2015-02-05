@@ -31,14 +31,14 @@ goldenTest inp = goldenVsFile
     (inp <.> ".gold.html")
     (inp <.> ".html")
     (do
-        t <- tmp
+        t <- mkTemp
         genHtml t inp
         removeDirectoryRecursive t)
 
 goldenTests :: IO TestTree
 goldenTests = (testGroup "Usual Gold") <$> (map goldenTest) <$> goldenInputs
 
-tmp = do
+mkTemp = do
     tmpdir <- Just <$> getTemporaryDirectory
     openTempDirectory tmpdir "vim-haskell-syntax-test-XXXXX"
 
