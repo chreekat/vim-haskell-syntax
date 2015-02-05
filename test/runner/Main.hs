@@ -30,7 +30,10 @@ goldenTest inp = goldenVsFile
     (dropExtension . takeFileName $ inp)
     (inp <.> ".gold.html")
     (inp <.> ".html")
-    (genHtml inp)
+    (do
+        t <- tmp
+        genHtml t inp
+        removeDirectoryRecursive t)
 
 goldenTests :: IO TestTree
 goldenTests = (testGroup "Usual Gold") <$> (map goldenTest) <$> goldenInputs
@@ -42,9 +45,9 @@ tmp = do
 -- | Generates <input>.html from <input>, using vim.
 --
 -- Uses a tmp directory to dump intermediate files.
-genHtml :: FilePath -> IO ()
-genHtml input = do
-    target <- tmp <$/> (takeFileName input)
+genHtml :: FilePath -> FilePath -> IO ()
+genHtml tmp input = do
+    let target = tmp </> (takeFileName input)
     copyFile input target
     void $ readProcess "vim"
         [ "-E"
@@ -54,7 +57,6 @@ genHtml input = do
         ]
         ""
     void $ runX $ stripTitle (target <.> ".html") (input <.> ".html")
-    removeDirectoryRecursive (takeDirectory target)
 
 stripTitle :: FilePath -> FilePath -> IOSArrow XmlTree XmlTree
 stripTitle inp out =
