@@ -31,37 +31,24 @@ goldenTest inp = goldenVsFile inp (inp <.> ".gold.html") (inp <.> ".html") (genH
 goldenTests :: IO TestTree
 goldenTests = (testGroup "Usual Gold") <$> (map goldenTest) <$> goldenInputs
 
-openTempDirectory :: Maybe FilePath -- ^ optional location
-                  -> String -- ^ template
-                  -> IO FilePath
-openTempDirectory mdir template = do
-    nameString <- readProcess "mktemp"
-        ([ "-d" ]
-         <> (maybe [] (\dir -> ["--tmpdir="<>dir]) mdir)
-         <> [template])
-        ""
-    return $ chop nameString
-
-    where
-    chop = reverse . (!! 1) . tails . reverse
-
 tmp = do
     tmpdir <- Just <$> getTemporaryDirectory
     openTempDirectory tmpdir "vim-haskell-syntax-test-XXXXX"
 
 -- | Generates <input>.html from <input>, using vim.
 --
--- Also uses a tmp directory to dump intermediate files.
+-- Uses a tmp directory to dump intermediate files.
 genHtml :: FilePath -> IO ()
 genHtml input = do
     target <- tmp <$/> (takeFileName input)
     copyFile input target
-    callProcess "vim"
+    void $ readProcess "vim"
         [ "-E"
         , "-S", "syntax/haskell.vim"
         , "-u", "test/runner/to-html.vim"
         , "--cmd", "view " ++ target
         ]
+        ""
     void $ runX $ stripTitle (target <.> ".html") (input <.> ".html")
     removeDirectoryRecursive (takeDirectory target)
 
@@ -78,3 +65,17 @@ readX = readDocument [withParseHTML True]
 
 writeX :: FilePath -> IOSArrow XmlTree XmlTree
 writeX out = writeDocument [withOutputHTML, withIndent True] out
+
+openTempDirectory :: Maybe FilePath -- ^ optional location
+                  -> String -- ^ template
+                  -> IO FilePath
+openTempDirectory mdir template = do
+    nameString <- readProcess "mktemp"
+        ([ "-d" ]
+         <> (maybe [] (\dir -> ["--tmpdir="<>dir]) mdir)
+         <> [template])
+        ""
+    return $ chop nameString
+
+    where
+    chop = reverse . (!! 1) . tails . reverse
