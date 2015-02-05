@@ -15,18 +15,12 @@ cabal-version:       >=1.10
 executable vim-haskell-syntax-tester
   hs-source-dirs:      test/runner
   main-is:             Main.hs
-  other-modules:       Test.Tasty.Golden.FilePath, Html, Types
-  -- other-extensions:
   build-depends:       base >=4.7 && <4.8,
-                       directory,
-                       hxt,
                        tasty,
                        tasty-golden,
-                       system-fileio,
-                       system-filepath,
-                       mtl,
-                       bytestring,
-                       shelly,
-                       text
+                       filepath,
+                       directory,
+                       process,
+                       hxt
 
   default-language:    Haskell2010

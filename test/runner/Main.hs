@@ -1,63 +1,56 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ExtendedDefaultRules #-}
-
-import Prelude hiding (FilePath, readFile)
-
-import Types
-import Html (goldenVsHtml)
-
 import Test.Tasty
+import Test.Tasty.Golden
 import Test.Tasty.Golden.Manage as Gold (defaultMain)
-import Test.Tasty.Golden.FilePath
-import Filesystem.Path.CurrentOS
-import Filesystem
-import System.Directory as Dir (getTemporaryDirectory)
 
 import Control.Applicative
-import Control.Exception (catch)
-import Control.Monad ((<=<))
-import Control.Monad.Reader
-import qualified Data.ByteString.Lazy as BS
-import Data.Text (Text)
+import Control.Monad
 
-main = join $ Gold.defaultMain <$> execUsualGoldTests
+import Data.Foldable
 
--- | "The usual"
+import System.FilePath
+import System.Directory
+import System.Process
+
+import Text.XML.HXT.Core
+
+main = join (Gold.defaultMain <$> goldenTests)
+
+goldenInputs :: IO [FilePath]
+goldenInputs = findByExtension [".hs"] "test/golden"
+
+goldenTest :: FilePath -> TestTree
+goldenTest inp = goldenVsFile inp (inp <.> ".gold.html") (inp <.> ".html") (genHtml inp)
+
+goldenTests :: IO TestTree
+goldenTests = (testGroup "Usual Gold") <$> (map goldenTest) <$> goldenInputs
+
+tmp = "/tmp/vim-haskell-syntax-test-XXXXXX"
+
+-- | Generates <input>.html from <input>, using vim.
 --
--- Where the name of the test file is the name of the test, and the name of
--- the golden file is <test>.gold.html
-usualGoldTest :: IO TmpPath -> InputPath -> TestTree
-usualGoldTest tmp input@(InputPath inp) =
-    goldenVsHtml testName tmp input (GoldPath $ inp <.> "gold.html")
+-- Also uses a tmp directory to dump intermediate files.
+genHtml :: FilePath -> IO ()
+genHtml input = do
+    let target = tmp </> (takeFileName input)
+    copyFile input target
+    callProcess "vim"
+        [ "-E"
+        , "-S", "syntax/haskell.vim"
+        , "-u", "test/runner/to-html.vim"
+        , "--cmd", "view " ++ target
+        ]
+    void $ runX $ stripTitle (target <.> ".html") (input <.> ".html")
 
-    where
-    testName = encodeString (filename inp)
+stripTitle :: FilePath -> FilePath -> IOSArrow XmlTree XmlTree
+stripTitle inp out =
+    readX inp
+    >>>
+    processTopDown (filterA $ neg (hasName "title"))
+    >>>
+    writeX out
 
+readX :: FilePath -> IOSArrow XmlTree XmlTree
+readX = readDocument [withParseHTML True]
 
--- | Gather all usual-golden test files.
-findUsualGoldInputs :: FilePath -> IO [InputPath]
-findUsualGoldInputs f = (map InputPath) <$> findByExtension [".hs"] f
-
-usualGoldTests :: IO TmpPath -> [InputPath] -> [TestTree]
-usualGoldTests tmp = map (usualGoldTest tmp)
-
-execUsualGoldTests :: IO TestTree
-execUsualGoldTests = do
-    ins <- findUsualGoldInputs "test/golden"
-    return $ withResource getTmpPath rmTmpPath
-        (testGroup "Usual Golden" . flip usualGoldTests ins)
-
-getTmpPath :: IO TmpPath
-getTmpPath = do
-    dir <- decodeString <$> getTemporaryDirectory
-    TmpPath <$> tempDir dir "vim-syntax-test-XXXXX"
-
-rmTmpPath :: TmpPath -> IO ()
-rmTmpPath (TmpPath path) = removeTree path
-
--- FIXME
-tempDir :: FilePath -> Text -> IO FilePath
-tempDir parentDir template = do
-    let retVal = parentDir </> (fromText template)
-    createDirectory False retVal
-    return retVal
+writeX :: FilePath -> IOSArrow XmlTree XmlTree
+writeX out = writeDocument [withOutputHTML, withIndent True] out
