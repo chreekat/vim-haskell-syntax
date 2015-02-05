@@ -9,11 +9,15 @@ if exists("b:current_syntax")
 endif
 syntax case match
 
-" Module name
+" Module name:
+"
+" A name (starts uppercase) that follows the "module" keyword.
 syn keyword hsModuleKeyword module nextgroup=hsModule skipwhite skipnl
 syn match   hsModule /\u\w*/ display contained
 
-" Top-level binding
-syn match   hsTopLevel /^\U\w*\ze\s*=/
+" Top-level binding:
+"
+" A name (starts lowercase) that precedes a single '='
+syn match   hsTopLevel /^\l\w*\ze\_s\{-}=/ display
 
 let b:current_syntax = "haskell"
