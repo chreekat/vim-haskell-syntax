@@ -17,7 +17,11 @@ syn match   hsModule /\u\w*/ display contained
 
 " Top-level binding:
 "
-" A name (starts lowercase) that precedes a single '='
-syn match   hsTopLevel /^\l\w*\ze\_s\{-}=/ display
+" A region that starts at the beginning of a line and ends at a single '='
+syn match  hsTopLevel /^\l\w*\_.\{-}=/ display
+    \ contains=hsTopLevelName,hsTopLevelArg
+" Order matters here
+syn match  hsTopLevelArg /\l\w*/ display contained
+syn match  hsTopLevelName /^\l\w*/ display contained
 
 let b:current_syntax = "haskell"

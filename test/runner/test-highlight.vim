@@ -1,4 +1,5 @@
 " Programmatic colors for testing
 
 hi hsModule ctermfg=1
-hi hsTopLevel ctermfg=2
+hi hsTopLevelName ctermfg=2
+hi hsTopLevelArg ctermfg=3
