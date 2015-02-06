@@ -34,6 +34,8 @@ goldenTest inp = goldenVsFileDiff
     (do
         t <- mkTemp
         genHtml t inp
+        -- Ensure a gold file exists, so diff is nice
+        callProcess "touch" [inp <.> ".gold.html"]
         removeDirectoryRecursive t)
 
 goldenTests :: IO TestTree
