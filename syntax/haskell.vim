@@ -31,9 +31,9 @@ syntax case match
 
 " Module name:
 "
-" A name (starts uppercase) that follows the "module" keyword.
+" A dotted name (starts uppercase) that follows the "module" keyword.
 syn keyword hsModuleKeyword module nextgroup=hsModule skipwhite skipnl
-syn match   hsModule /\u\w*/ display contained
+syn match   hsModule /\u\w*\%(\.\u\w*\)*/ display contained
 
 " Top-level declaration:
 "
