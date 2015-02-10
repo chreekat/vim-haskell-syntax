@@ -4,6 +4,26 @@
 " Last Change: 2015 Feb 01
 " Remark: A focus on semantic elements
 
+" Haskell syntax is tough to tease out with vim's regexes. I'm going to
+" make some opinionated assumptions. Hopefully nothing shocking. Here's a
+" list:
+"
+" 1. The LHS of a declaration, up to the '=', is all on the same line.
+"    YES: foo a b = ...
+"     NO: foo
+"             a
+"             b = ...
+"     NO: foo a b
+"             = ...
+"
+"    This rule applies to both top level declarations and let/while
+"    declarations.
+"
+" 2. The '=' of any let, where, or top-level binding must be surrounded by whitespace.
+"    YES: foo a = ...
+"     NO: foo a= ...
+"     NO: foo=bar
+
 if exists("b:current_syntax")
     finish
 endif
