@@ -19,7 +19,9 @@
 "    This rule applies to both top level declarations and let/while
 "    declarations.
 "
-" 2. The '=' of any let, where, or top-level binding must be surrounded by whitespace.
+" 2. The '=' of any let, where, or top-level binding must be surrounded by
+"    whitespace. (List comprehensions are specifically excluded; but then,
+"    I don't have highlighting plans for list comprehensions just yet.)
 "    YES: foo a = ...
 "     NO: foo a= ...
 "     NO: foo=bar
@@ -49,7 +51,7 @@ syn keyword hsDeclKeyword let where
 " This is analogous to "ccFoobar" in the nextgroup example. It matches
 " everything from the beginning of the name being declared to the ' =' at
 " the end.
-syn match hsNestedNameArg /\l\w*.\{-} =/ contains=hsNestedName
+syn match hsNestedNameArg /\l\w*.\{-} =[[:punct:]]\@!/ contains=hsNestedName
 " This is "ccFoo" in the example. It matches just the head of the list, and
 " links to the tail.
 syn match hsNestedName /\l\w*/ contained nextgroup=hsNestedArgRec
@@ -60,7 +62,7 @@ syn match hsNestedName /\l\w*/ contained nextgroup=hsNestedArgRec
 " NOTE: Probably a bug: If 'oneline' is removed, the following group goes active
 " even at the top level (i.e. not contained in any group), in spite of
 " being marked 'contained'.
-syn region hsNestedArgRec start=/\s/ end=/ =/
+syn region hsNestedArgRec start=/\s/ end=/ =[[:punct:]]\@!/
     \ oneline contained contains=hsNestedArg
 " Now we match the 'head' arg inside of ArgRec, then recurse to the next
 " ArgRec. Think (head (tail ...))
