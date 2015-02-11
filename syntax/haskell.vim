@@ -29,12 +29,6 @@ if exists("b:current_syntax")
 endif
 syntax case match
 
-" Module name:
-"
-" A dotted name (starts uppercase) that follows the "module" keyword.
-syn keyword hsModuleKeyword module nextgroup=hsModule skipwhite skipnl
-syn match   hsModule /\u\w*\%(\.\u\w*\)*/ display contained
-
 " Top-level declaration:
 "
 " A region that starts at the beginning of a line and ends at a single '='
@@ -48,5 +42,17 @@ syn match  hsTopLevelName /^\l\w*/ display contained
 "
 " A region that starts at the beginning of a line and has no '=' anywhere
 syn match  hsTopLevelExpr /^\S[^=]*\ze\(\n\|\n\s[^=]*\)*\(\n\S\|\%$\)/
+
+" Module name.
+"
+" Need a region. I thought this would work, but it doesn't:
+"     syn match hsModule /^module\_s*\zs\u\w*.../
+syn region hsModuleRegion
+    \ start=/^module\>/ end=/\<where\>/
+    \ contains=hsModule,hsExports display
+syn match hsModule /\u\w*\%(\.\u\w*\)*/ contained
+
+" TODO: Relax this requirement.
+syn sync fromstart
 
 let b:current_syntax = "haskell"
