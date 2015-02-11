@@ -77,12 +77,6 @@ syn match  hsTopLevelDecl /^\l\w*\_.\{-}=/
 syn match  hsTopLevelArg /\l\w*/ display contained
 syn match  hsTopLevelName /^\l\w*/ display contained
 
-" Top-level expression {{{1
-" --------------------
-"
-" A region that starts at the beginning of a line and has no '=' anywhere
-syn match  hsTopLevelExpr /^\S[^=]*\ze\(\n\|\n\s[^=]*\)*\(\n\S\|\%$\)/
-
 " Module name {{{1
 " -----------
 "
