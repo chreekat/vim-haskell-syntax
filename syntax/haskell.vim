@@ -29,8 +29,45 @@ if exists("b:current_syntax")
 endif
 syntax case match
 
-" Top-level declaration:
+" Nested declaration
+" ------------------
+" This takes something like "let x a = ..." and gives the following syntax
+" highlights: x : hsNestedName, a : hsNestedArg.
 "
+" NOTE: This is very fragile and took a couple days to figure out!
+"
+" Cribbing off of the example given in nextgroup documentation, here is how
+" it works. The example is a two-step, going from Foo to Bar to Foo, But
+" what I want a right-recursive nesting of Args (Bars) following the
+" initial Name (Foo).
+"
+" To be right-recursive, each match or region will always end at ' ='.
+"
+" The top-most, outer region will have to jump over 'let' and 'where'. That
+" is accomplished by making them keywords.
+syn keyword hsDeclKeyword let where
+" This is analogous to "ccFoobar" in the nextgroup example. It matches
+" everything from the beginning of the name being declared to the ' =' at
+" the end.
+syn match hsNestedNameArg /\l\w*.\{-} =/ contains=hsNestedName
+" This is "ccFoo" in the example. It matches just the head of the list, and
+" links to the tail.
+syn match hsNestedName /\l\w*/ contained nextgroup=hsNestedArgRec
+" This is where we deviate from the example. Rather than ending at the next
+" "Foo", we continue to the " =" at the end of the original match. In other
+" words, we match the whole tail.
+"
+" NOTE: Probably a bug: If 'oneline' is removed, the following group goes active
+" even at the top level (i.e. not contained in any group), in spite of
+" being marked 'contained'.
+syn region hsNestedArgRec start=/\s/ end=/ =/
+    \ oneline contained contains=hsNestedArg
+" Now we match the 'head' arg inside of ArgRec, then recurse to the next
+" ArgRec. Think (head (tail ...))
+syn match hsNestedArg /\l\w*/ contained nextgroup=hsNextedArgRec
+
+" Top-level declaration
+" ---------------------
 " A region that starts at the beginning of a line and ends at a single '='
 syn match  hsTopLevelDecl /^\l\w*\_.\{-}=/
     \ contains=hsTopLevelName,hsTopLevelArg
@@ -38,7 +75,8 @@ syn match  hsTopLevelDecl /^\l\w*\_.\{-}=/
 syn match  hsTopLevelArg /\l\w*/ display contained
 syn match  hsTopLevelName /^\l\w*/ display contained
 
-" Top-level expression:
+" Top-level expression
+" --------------------
 "
 " A region that starts at the beginning of a line and has no '=' anywhere
 syn match  hsTopLevelExpr /^\S[^=]*\ze\(\n\|\n\s[^=]*\)*\(\n\S\|\%$\)/
