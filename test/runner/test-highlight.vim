@@ -1,8 +1,18 @@
 " Programmatic colors for testing
 
-hi hsModule ctermfg=1
-hi hsTopLevelName ctermfg=2
-hi hsTopLevelArg ctermfg=3
-hi hsTopLevelExpr ctermfg=4
-hi hsNestedName ctermfg=5
-hi hsNestedArg ctermfg=6
+let s:counter = 0
+
+func! s:getHigh(name)
+    exec "hi hs" . a:name . " ctermfg=" . ++s:counter
+endfunc
+
+for name in
+    \ [ "Module"
+    \ , "TopLevelName"
+    \ , "TopLevelArg"
+    \ , "TopLevelExpr"
+    \ , "NestedName"
+    \ , "NestedArg"
+    \ ]
+    call s:getHigh(name)
+endfor
