@@ -31,7 +31,7 @@ if exists("b:current_syntax")
 endif
 syntax case match
 
-" Nested declaration
+" Nested declaration {{{1
 " ------------------
 " This takes something like "let x a = ..." and gives the following syntax
 " highlights: x : hsNestedName, a : hsNestedArg.
@@ -68,7 +68,7 @@ syn region hsNestedArgRec start=/\s/ end=/ =[[:punct:]]\@!/
 " ArgRec. Think (head (tail ...))
 syn match hsNestedArg /\l\w*/ contained nextgroup=hsNextedArgRec
 
-" Top-level declaration
+" Top-level declaration {{{1
 " ---------------------
 " A region that starts at the beginning of a line and ends at a single '='
 syn match  hsTopLevelDecl /^\l\w*\_.\{-}=/
@@ -77,13 +77,14 @@ syn match  hsTopLevelDecl /^\l\w*\_.\{-}=/
 syn match  hsTopLevelArg /\l\w*/ display contained
 syn match  hsTopLevelName /^\l\w*/ display contained
 
-" Top-level expression
+" Top-level expression {{{1
 " --------------------
 "
 " A region that starts at the beginning of a line and has no '=' anywhere
 syn match  hsTopLevelExpr /^\S[^=]*\ze\(\n\|\n\s[^=]*\)*\(\n\S\|\%$\)/
 
-" Module name.
+" Module name {{{1
+" -----------
 "
 " Need a region. I thought this would work, but it doesn't:
 "     syn match hsModule /^module\_s*\zs\u\w*.../
@@ -94,7 +95,10 @@ syn match hsModule /\u\w*\%(\.\u\w*\)*/ contained display
 syn region hsExports
     \ start=/(/ skip=/([[:punct:]]*)/ end=/)/ contained display
 
+" }}}1
+
 " TODO: Relax this requirement.
 syn sync fromstart
 
 let b:current_syntax = "haskell"
+" vim: fdm=marker :
