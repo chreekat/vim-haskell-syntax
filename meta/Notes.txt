@@ -1,0 +1,73 @@
+~~~ 2-feb-15
+17:15: Setting up a test framemwork. Going to use ghci to run tests, and
+use Shelly and Tasty. Yum.
+
+Most tests will be golden tests. Golden tests will all perform the same
+way, using shelly to call vim to generate the html, then comparing the html
+to the golden html. Let's try it!
+
+Step 1: An IO action that generates the output file.
+
+    FilePath -> IO HtmlSyntax
+
+Step 0: Set up cabal to build a test executable.
+
+Step 0.5: Html tests need a tmp directory, which is a resource. This
+requires withResource. Or, each golden test could have its own... lol just
+kidding. So there will be a framework for golden-html tests.
+
+Sadly the best things I can find for working with temp dirs are shelly's
+withTmpDir, which is already bracketed. I'll just steal its code.
+
+get temp dir
+run goldenHtml tests
+rm temp dir
+
+
+" Cheat sheet
+"
+" syn match Item //
+"
+" syn region Item start=// end=// skip=//
+"
+" Options:
+"
+"    Nested items
+"        * contained/contains=Item (can recurse)
+"        * Special: ALL, ALLBUT, TOP [not contained], CONTAINED
+"        * [How would you use TOP?]
+"        * TOP and CONTAINED work like TOPBUT (CONTAINEDBUT), when add'l
+"          args exist
+"        * Args can be patterns
+"        * Use matchgroup to prevent nested items being in start/end
+"        * Nested region with same end: use keepend on outer region
+"
+"    Following groups
+"        * Link with nextgroup
+"        * Following groups must be 'contained', I think?
+"        * Can tokenize with skipwhite, skipnl, skipempty
+"
+"    Transparent items take highlighting of what contains them
+"
+"    Offsets for start/skip/end
+"        * ms, me, hs, he, rs, re, lc; s, e
+"        * Can duplicate the effect of syn match G matchgroup=G
+"
+"    Oneline can make things faster: without it, regions will start even if
+"    there's no end in the file
+"
+"    If a contained pattern includes a newline that fucks up the outer
+"    pattern, use excludenl before the pattern in the contained pattern.
+"
+" syn cluster Item contains=Foo,Bar. Then used with contains=@Item
+"
+" syn cluster can be added/removed which is a terrible idea with
+"    syn cluster Item add=foo/remove=foo
+"
+" Maybe sync to tlds with syn sync match? Note, syn sync match can also
+" skip groups
+"
+" Probably put "display" on EVERYTHING because it shouldn't be used for
+" syncing. Judiciously put them back to make syncing work.
+"
+" Avoid matches that can match empty string
