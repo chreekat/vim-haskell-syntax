@@ -50,7 +50,9 @@ syn match  hsTopLevelExpr /^\S[^=]*\ze\(\n\|\n\s[^=]*\)*\(\n\S\|\%$\)/
 syn region hsModuleRegion
     \ start=/^module\>/ end=/\<where\>/
     \ contains=hsModule,hsExports display
-syn match hsModule /\u\w*\%(\.\u\w*\)*/ contained
+syn match hsModule /\u\w*\%(\.\u\w*\)*/ contained display
+syn region hsExports
+    \ start=/(/ skip=/([[:punct:]]*)/ end=/)/ contained display
 
 " TODO: Relax this requirement.
 syn sync fromstart
