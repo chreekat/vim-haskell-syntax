@@ -70,12 +70,42 @@ syn match hsNestedArg /\l\w*/ contained nextgroup=hsNextedArgRec
 
 " Top-level declaration {{{1
 " ---------------------
-" A region that starts at the beginning of a line and ends at a single '='
-syn match  hsTopLevelDecl /^\l\w*\_.\{-} =/
+" A region that starts at the beginning of a line and ends at a single '='.
+" To differentiate between infix decls, disallow punctuation.
+syn match  hsTopLevelDecl /^\l\w*[^[:punct:]]* =/ display
     \ contains=hsTopLevelName,hsTopLevelArg
-" Order matters here
+" Order matters here: \l\w* matches both args and names, so args must be
+" listed first to have lower precedence.
 syn match  hsTopLevelArg /\l\w*/ display contained
 syn match  hsTopLevelName /^\l\w*/ display contained
+
+" Top-level infix declaration {{{1
+" ---------------------------
+"
+" The first has parentheses and punctuation at the start.
+syn match hsTopLevelDeclParen /([[:punct:]]\+).* =/ display
+    \ contains=hsTopLevelName,hsTopLevelArg
+syn match hsTopLevelName /([[:punct:]]\+)/ display contained
+" The second has infix punctuation. Except backticks! Thus this has lower
+" precedence than the following, which explicitly looks for backticks.
+"
+" Specifically, it uses an \& to see if there is punctuation somewhere
+" before the '=' at the end of the declaration.
+syn match hsTopLevelDeclInfixPunct /^.*[[:punct:]].* =[[:punct:]]\@!\&^\l\w*.*\ze =/ display
+     \ contains=hsTopLevelArg,hsTopLevelPunctName
+" This is a hacky way to match [[:punct:]]* and highlight it as
+" hsTopLevelName without changing hsTopLevelName's definition.
+syn region hsTopLevelPunctName matchgroup=hsTopLevelName
+    \ start=/[[:punct:]]/ end=/[[:punct:]]*/ oneline display contained
+" hi link hsTopLevelPunct hsTopLevelName
+" The third has infix backticks. Similar to the above, but ` is a lot
+" easier to write than [[:punct:]], and there's no trick false positives
+" caused by the '=' at the end of the declaration.
+syn match hsTopLevelDeclInfixBacktick /^.*`\&^\l\w*.* =/ display
+    \ contains=hsTopLevelInfixName,hsTopLevelArg
+syn region hsTopLevelInfixName start=/`/ end=/`/ display contained oneline
+    \ contains=hsTopLevelName
+syn match  hsTopLevelName /`\zs\l\w*/ display contained
 
 " Module name {{{1
 " -----------
