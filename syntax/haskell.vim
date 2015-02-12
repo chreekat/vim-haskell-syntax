@@ -71,7 +71,7 @@ syn match hsNestedArg /\l\w*/ contained nextgroup=hsNextedArgRec
 " Top-level declaration {{{1
 " ---------------------
 " A region that starts at the beginning of a line and ends at a single '='
-syn match  hsTopLevelDecl /^\l\w*\_.\{-}=/
+syn match  hsTopLevelDecl /^\l\w*\_.\{-} =/
     \ contains=hsTopLevelName,hsTopLevelArg
 " Order matters here
 syn match  hsTopLevelArg /\l\w*/ display contained
