@@ -25,21 +25,21 @@ main = join (Gold.defaultMain <$> goldenTests)
 goldenInputs :: IO [FilePath]
 goldenInputs = findByExtension [".hs"] "test/golden"
 
-goldenTest :: FilePath -> TestTree
-goldenTest inp = goldenVsFileDiff
+goldenTest :: IO FilePath -> FilePath -> TestTree
+goldenTest tmp inp = goldenVsFileDiff
     (dropExtension . takeFileName $ inp)
     (\a b -> ["diff", "-u", a, b])
     (inp <.> ".gold.html")
     (inp <.> ".html")
     (do
-        t <- mkTemp
-        genHtml t inp
-        -- Ensure a gold file exists, so diff is nice
-        callProcess "touch" [inp <.> ".gold.html"]
-        removeDirectoryRecursive t)
+        t <- tmp
+        genHtml t inp)
 
 goldenTests :: IO TestTree
-goldenTests = (testGroup "Usual Gold") <$> (map goldenTest) <$> goldenInputs
+goldenTests = do
+    is <- goldenInputs
+    let ts tmp = testGroup "Usual Gold" (map (goldenTest tmp) is)
+    return $ withResource mkTemp removeDirectoryRecursive ts
 
 mkTemp = do
     tmpdir <- Just <$> getTemporaryDirectory
