@@ -1,0 +1,1 @@
+wayRTSOnly (WayCustom {}) = False
