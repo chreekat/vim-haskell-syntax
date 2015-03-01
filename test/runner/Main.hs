@@ -15,42 +15,41 @@ import System.Process
 
 import Text.XML.HXT.Core
 
--- | Minor convenience
-(<$/>) :: Functor f => f FilePath -> FilePath -> f FilePath
-fa <$/> b = (</> b) <$> fa
-infixl 4 <$/>
+newtype InputPath = InputPath FilePath
+newtype TmpPath = TmpPath { fromTmp :: FilePath }
 
 main = join (Gold.defaultMain <$> goldenTests)
 
-goldenInputs :: IO [FilePath]
-goldenInputs = findByExtension [".hs"] "test/golden"
+goldenInputs :: IO [InputPath]
+goldenInputs = map InputPath <$> findByExtension [".hs"] "test/golden"
 
-goldenTest :: IO FilePath -> FilePath -> TestTree
-goldenTest tmp inp = goldenVsFileDiff
+goldenTest :: IO TmpPath -> InputPath -> TestTree
+goldenTest tmp (InputPath inp) = goldenVsFileDiff
     (dropExtension . takeFileName $ inp)
     (\a b -> ["diff", "-u", a, b])
     (inp <.> ".gold.html")
     (inp <.> ".html")
-    (do
-        t <- tmp
-        genHtml t inp)
+    ((genHtml (InputPath inp) . fromTmp) =<< tmp)
 
 goldenTests :: IO TestTree
 goldenTests = do
     is <- goldenInputs
     let ts tmp = testGroup "Usual Gold" (map (goldenTest tmp) is)
-    return $ withResource mkTemp removeDirectoryRecursive ts
+    return $ withResource
+        mkTemp
+        (removeDirectoryRecursive . fromTmp)
+        ts
 
-mkTemp = do
+mkTemp = TmpPath <$> do
     tmpdir <- Just <$> getTemporaryDirectory
     openTempDirectory tmpdir "vim-haskell-syntax-test-XXXXX"
 
 -- | Generates <input>.html from <input>, using vim.
 --
 -- Uses a tmp directory to dump intermediate files.
-genHtml :: FilePath -> FilePath -> IO ()
-genHtml tmp input = do
-    let target = tmp </> (takeFileName input)
+genHtml :: InputPath -> FilePath -> IO ()
+genHtml (InputPath input) tmp = do
+    let target = tmp </> takeFileName input
     copyFile input target
     void $ readProcess "vim"
         [ "-Eu", "syntax/haskell.vim"
@@ -78,7 +77,7 @@ readX :: FilePath -> IOSArrow XmlTree XmlTree
 readX = readDocument [withParseHTML True]
 
 writeX :: FilePath -> IOSArrow XmlTree XmlTree
-writeX out = writeDocument [withOutputHTML] out
+writeX = writeDocument [withOutputHTML]
 
 openTempDirectory :: Maybe FilePath -- ^ optional location
                   -> String -- ^ template
@@ -86,8 +85,8 @@ openTempDirectory :: Maybe FilePath -- ^ optional location
 openTempDirectory mdir template = do
     nameString <- readProcess "mktemp"
         ([ "-d" ]
-         <> (maybe [] (\dir -> ["--tmpdir="<>dir]) mdir)
-         <> [template])
+            <> maybe [] (\dir -> ["--tmpdir="<>dir]) mdir
+            <> [template])
         ""
     return $ chop nameString
 
