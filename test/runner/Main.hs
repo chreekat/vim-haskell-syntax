@@ -7,6 +7,7 @@ import Control.Monad
 
 import Data.Foldable
 import Data.List
+import Data.Maybe
 import Data.Monoid
 
 import System.FilePath
@@ -20,16 +21,21 @@ newtype TmpPath = TmpPath { fromTmp :: FilePath }
 
 main = join (Gold.defaultMain <$> goldenTests)
 
+goldenStore = "test/golden"
+
 goldenInputs :: IO [InputPath]
-goldenInputs = map InputPath <$> findByExtension [".hs"] "test/golden"
+goldenInputs = map InputPath <$> findByExtension [".hs"] goldenStore
 
 goldenTest :: IO TmpPath -> InputPath -> TestTree
 goldenTest tmp (InputPath inp) = goldenVsFileDiff
-    (dropExtension . takeFileName $ inp)
+    (fancyName inp)
     (\a b -> ["diff", "-u", a, b])
     (inp <.> ".gold.html")
     (inp <.> ".html")
     ((genHtml (InputPath inp) . fromTmp) =<< tmp)
+  where
+    -- "test/golden/toplevel/test.hs" --> "toplevel/test"
+    fancyName = tail . fromJust . stripPrefix goldenStore . dropExtension
 
 goldenTests :: IO TestTree
 goldenTests = do
