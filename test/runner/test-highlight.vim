@@ -3,7 +3,8 @@
 let s:counter = 0
 
 func! s:getHigh(name)
-    exec "hi hs" . a:name . " ctermfg=" . ++s:counter
+    exec "hi hs" . a:name . " ctermfg=" . s:counter
+    let s:counter = s:counter + 1
 endfunc
 
 for name in
