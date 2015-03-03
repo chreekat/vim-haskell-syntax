@@ -45,16 +45,24 @@ syntax case match
 "
 " To be right-recursive, each match or region will always end at ' ='.
 "
-" The top-most, outer region will have to jump over 'let' and 'where'. That
-" is accomplished by making them keywords.
-syn keyword hsDeclKeyword let where
+" The top-most, outer region will have to jump over 'let' and 'where'. Two
+" varieties of that: jump over any amount of crap followed by let and
+" where, or start at the beginning of a (non-top-level) line that has NO
+" let or where.
+syn match hsNestedDecl
+    \ /\%(let\|where\)\s\+\zs.\{-} =[[:punct:]]\@!/
+    \ display contains=hsNestedNameArg
+syn match hsNestedDeclCont
+    \ /^\%(.*\%(let\|where\)\)\@!\s.* =[[:punct:]]\@!/ 
+    \ display contains=hsNestedNameArg
 " This is analogous to "ccFoobar" in the nextgroup example. It matches
 " everything from the beginning of the name being declared to the ' =' at
 " the end.
-syn match hsNestedNameArg /\l\w*.\{-} =[[:punct:]]\@!/ contains=hsNestedName
+syn match hsNestedNameArg
+    \ /\l\w*.\{-} =[[:punct:]]\@!/ display contained contains=hsNestedName
 " This is "ccFoo" in the example. It matches just the head of the list, and
 " links to the tail.
-syn match hsNestedName /\l\w*/ contained nextgroup=hsNestedArgRec
+syn match hsNestedName /\l\w*/ display contained nextgroup=hsNestedArgRec
 " This is where we deviate from the example. Rather than ending at the next
 " "Foo", we continue to the " =" at the end of the original match. In other
 " words, we match the whole tail.
@@ -63,10 +71,10 @@ syn match hsNestedName /\l\w*/ contained nextgroup=hsNestedArgRec
 " even at the top level (i.e. not contained in any group), in spite of
 " being marked 'contained'.
 syn region hsNestedArgRec start=/\s/ end=/ =[[:punct:]]\@!/
-    \ oneline contained contains=hsNestedArg
+    \ oneline contained contains=hsNestedArg display
 " Now we match the 'head' arg inside of ArgRec, then recurse to the next
 " ArgRec. Think (head (tail ...))
-syn match hsNestedArg /\<\l\w*/ contained nextgroup=hsNextedArgRec
+syn match hsNestedArg /\<\l\w*/ display contained nextgroup=hsNextedArgRec
 
 " Top-level declaration {{{1
 " ---------------------
@@ -83,7 +91,7 @@ syn match  hsTopLevelName /^\l\w*/ display contained
 " ---------------------------
 "
 " The first has parentheses and punctuation at the start.
-syn match hsTopLevelDeclParen /([[:punct:]]\+).* =[[:punct:]]\@!/ display
+syn match hsTopLevelDeclParen /^([[:punct:]]\+).* =[[:punct:]]\@!/ display
     \ contains=hsTopLevelName,hsTopLevelArg
 syn match hsTopLevelName /([[:punct:]]\+)/ display contained
 " The second has infix punctuation. Any punctuation operator has at least
