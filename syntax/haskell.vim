@@ -98,7 +98,7 @@ syn region hsTopLevelPunctName matchgroup=hsTopLevelName
 " The third has infix backticks. Similar to the above, but ` is a lot
 " easier to write than [[:punct:]], and there's no trick false positives
 " caused by the '=' at the end of the declaration.
-syn match hsTopLevelDeclInfixBacktick /^.*`\&^\l\w*.* =/ display
+syn match hsTopLevelDeclInfixBacktick /^\k.\{-}`.\{-} =[[:punct:]]\@!\&^\k*.\{-} =[[:punct:]]\@!/ display
     \ contains=hsTopLevelInfixName,hsTopLevelArg
 syn region hsTopLevelInfixName start=/`/ end=/`/ display contained oneline
     \ contains=hsTopLevelName
