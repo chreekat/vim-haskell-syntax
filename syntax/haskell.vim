@@ -31,6 +31,42 @@ if exists("b:current_syntax")
 endif
 syntax case match
 
+" Language for defining these syntax items
+" ----------------------------------------
+"
+" TODO: Catch Unicode symbols and punctuation. In Lexeme.hs in ghc, this
+" corresponds to having Pc, Pd, Po, Sm, Sc, Sk, or So in column 3 of
+" http://www.unicode.org/Public/UNIDATA/UnicodeData.txt.
+"
+" For now, I'll use these ASCII definitions, since vim supports it best.
+let symList = '-!#$%&*+./<=>?@\\\^|~:'
+let varSym = '[' . symList . ']'
+let notVarSym = '[^' . symList . ']'
+" No ':' for the start symbol for vars.
+let varSymStart = substitute(varSym, ':', '', '')
+let op = varSymStart . varSym . '*'
+" op sans one of the reserved ops: '='. This matches any single symbol
+" except '=', or it matches '=S' for some symbol S.
+let notEqOp =
+    \ '\%(=' . varSym . '\|' . substitute(varSymStart, '=', '', '') . '\)'
+
+let tld_end = ' =\S\@!'
+
+func! s:match(name, match, args)
+    exec "syn match " . a:name . ' ' . a:match . ' display ' . a:args
+endfunc
+
+func! s:region(name, mg_start, start, end, args)
+    let l:mg_start = ""
+    if strlen(a:mg_start) > 0
+        let l:mg_start = "matchgroup=" . a:mg_start
+    endif
+    exec "syn region " . a:name
+        \ . ' ' . l:mg_start . ' start=' . a:start
+        \ . ' end=' . a:end
+        \ . ' display ' . a:args
+endfunc
+
 " Nested declaration {{{1
 " ------------------
 " This takes something like "let x a = ..." and gives the following syntax
@@ -76,36 +112,42 @@ syn region hsNestedArgRec start=/\s/ end=/ =[[:punct:]]\@!/
 " ArgRec. Think (head (tail ...))
 syn match hsNestedArg /\<\l\w*/ display contained nextgroup=hsNextedArgRec
 
-" Top-level declaration {{{1
+" Top-level declarations {{{1
 " ---------------------
+
+" This catch-all region may be overkill, but it makes me sleep better
+" knowing that all the top-level matches below are contained within it. It
+" doesn't really help much, since an inner region can easily escape!
+call s:match('hsTopLevelReg',
+    \ '/^\S.\{-}' . tld_end .'/',
+    \ 'contains=hsTopLevelDecl,hsTopLevelDeclInfixPunct')
+
 " A region that starts at the beginning of a line and ends at the first
-" single '='.
-syn match  hsTopLevelDecl /^\l.\{-} =[[:punct:]]\@!/ display
-    \ contains=hsTopLevelName,hsTopLevelArg
+" single '='. {{{2
+call s:match('hsTopLevelDecl',
+    \ '/^\l.\{-}' . tld_end . '/',
+    \ 'contained contains=hsTopLevelName,hsTopLevelArg')
 " Order matters here: \l\w* matches both args and names, so args must be
 " listed first to have lower precedence.
-syn match  hsTopLevelArg /\<\l\w*/ display contained
-syn match  hsTopLevelName /^\l\w*/ display contained
+syn match hsTopLevelArg /\<\l\w*/ display contained
+syn match hsTopLevelName /^\l\w*/ display contained
 
-" Top-level infix declaration {{{1
+" Top-level operator declaration {{{2
 " ---------------------------
 "
-" The first has parentheses and punctuation at the start.
-syn match hsTopLevelDeclParen /^([[:punct:]]\+).* =[[:punct:]]\@!/ display
-    \ contains=hsTopLevelName,hsTopLevelArg
-syn match hsTopLevelName /([[:punct:]]\+)/ display contained
-" The second has infix punctuation. Any punctuation operator has at least
-" two chars, I think.
-syn match hsTopLevelDeclInfixPunct
-    \ /^\l.*[[:punct:]]\{2,}.*\ze =[[:punct:]]\@!/
-    \ display contains=hsTopLevelArg,hsTopLevelPunctName
+" Infix punctuation.
+call s:match('hsTopLevelDeclInfixPunct',
+    \ '/^.\{-}' . notEqOp . '.\{-}\ze' . tld_end . '/',
+    \ 'contained contains=hsTopLevelArg,hsTopLevelPunctName')
 " This is a hacky way to match [[:punct:]] and highlight it as
 " hsTopLevelName without changing hsTopLevelName's definition.
-syn region hsTopLevelPunctName matchgroup=hsTopLevelName
-    \ start=/[[:punct:]]/ end=/[[:punct:]]*/ oneline display contained
-" The third has infix backticks. Similar to the above, but ` is a lot
-" easier to write than [[:punct:]], and there's no trick false positives
-" caused by the '=' at the end of the declaration.
+call s:region('hsTopLevelPunctName',
+    \ 'hsTopLevelName', '/' . varSymStart . '/',
+    \ '/' . varSym . '*/',
+    \ 'oneline contained')
+" Backtick operator. Similar to the above, but ` is a lot easier to write
+" than [[:punct:]], and there's no trick false positives caused by the '='
+" at the end of the declaration. {{{2
 syn match hsTopLevelDeclInfixBacktick /^\k.\{-}`.\{-} =[[:punct:]]\@!\&^\k*.\{-} =[[:punct:]]\@!/ display
     \ contains=hsTopLevelInfixName,hsTopLevelArg
 syn region hsTopLevelInfixName start=/`/ end=/`/ display contained oneline
