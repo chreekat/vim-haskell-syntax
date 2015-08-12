@@ -98,5 +98,7 @@ openTempDirectory mdir template = do
         ""
     return $ chop nameString
 
-    where
-    chop = reverse . (!! 1) . tails . reverse
+  where
+    chop []     = []
+    chop [_]    = []
+    chop (x:xs) = x : chop xs
