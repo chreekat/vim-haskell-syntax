@@ -5,7 +5,6 @@ import Test.Tasty.Golden.Manage as Gold (defaultMain)
 import Control.Applicative
 import Control.Monad
 
-import Data.Foldable
 import Data.List
 import Data.Maybe
 import Data.Monoid
@@ -19,8 +18,10 @@ import Text.XML.HXT.Core
 newtype InputPath = InputPath FilePath
 newtype TmpPath = TmpPath { fromTmp :: FilePath }
 
+main :: IO ()
 main = join (Gold.defaultMain <$> goldenTests)
 
+goldenStore :: String
 goldenStore = "test/golden"
 
 goldenInputs :: IO [InputPath]
@@ -46,6 +47,7 @@ goldenTests = do
         (removeDirectoryRecursive . fromTmp)
         ts
 
+mkTemp :: IO TmpPath
 mkTemp = TmpPath <$> do
     tmpdir <- Just <$> getTemporaryDirectory
     openTempDirectory tmpdir "vim-haskell-syntax-test-XXXXX"
